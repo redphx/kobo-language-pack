@@ -124,10 +124,14 @@ def copy_fonts():
 
 
 def inject_about_page(source: str, version: str):
-    # Find the index of "<p>© 2009-" string
-    index = source.index('<source>&lt;p&gt;&amp;copy; 2009-%1')
-    # Find the closest <translation> tag
-    index = source.index('<translation>', index) + 13
+    try:
+        # Find the index of "<p>© 2009-" string
+        index = source.index('<source>&lt;p&gt;&amp;copy; 2009-%1')
+        # Find the closest <translation> tag
+        index = source.index('<translation>', index) + 13
+    except Exception:
+        print('WARNING: unable to find the About translation')
+        return source
 
     info = [
         f'<p><b>Dự án Kobo tiếng Việt</b> ({version})</p>',
@@ -184,7 +188,7 @@ def combine_translations(version: str):
     print(f'- Created {qm_path} successfully')
 
 
-def generate_tgz(version: str):
+def generate_tgz(version: str, include: list):
     dist_path = Path(CURRENT_DIR) / 'dist'
     os.makedirs(dist_path, exist_ok=True)
 
@@ -195,6 +199,19 @@ def generate_tgz(version: str):
             if '.DS_Store' in arcname:
                 continue
 
+            if 'translations' not in include:
+                if (
+                    arcname.startswith('/etc')
+                    or arcname.startswith('/root')
+                    or '/Kobo/translations' in arcname
+                ):
+                    continue
+
+            if 'fonts' not in include:
+                if '/fonts/' in arcname:
+                    continue
+
+            print(arcname)
             tar.add(pth, arcname=arcname)
 
     # Create dist/VERSION
@@ -205,15 +222,36 @@ def generate_tgz(version: str):
 
 
 def main():
-    if not os.environ['LRELEASE']:
-        print('No LRELEASE definition in .env file')
-        return
+    def include_type(value):
+        allowed = {'fonts', 'translations'}
+        if value == 'all':
+            return allowed
+
+        items = value.split(',')
+        invalid = set(items) - allowed
+
+        if invalid:
+            raise argparse.ArgumentTypeError(f'invalid param: {", ".join(invalid)}')
+
+        return items
 
     # Parse arguments
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--include',
+        type=include_type,
+        default='all',
+        help='Can be either "all" or comma-separated list: fonts, translations',
+    )
     parser.add_argument('--build', type=str, default='dev', choices=['release', 'dev'])
     parser.add_argument('--version', type=str, help='Version in YYYYMMDD format')
     args = parser.parse_args()
+
+    include: set = args.include
+    if 'translations' in include:
+        if not os.environ.get('LRELEASE'):
+            print('No LRELEASE definition in .env file')
+            return
 
     build = args.build
     version = args.version or date.today().strftime('%Y%m%d')
@@ -227,9 +265,13 @@ def main():
     print(f'=== Version: {version} ===')
 
     # Start building
-    combine_translations(version)
-    copy_fonts()
-    generate_tgz(version)
+    if 'translations' in include:
+        combine_translations(version)
+
+    if 'fonts' in include:
+        copy_fonts()
+
+    generate_tgz(version, include)
 
     print('Built successfully!')
 
