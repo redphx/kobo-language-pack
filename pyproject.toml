@@ -1,0 +1,11 @@
+[project]
+name = "kobo-language-pack"
+version = "1.0.0"
+description = "Language pack for Kobo"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fonttools>=4.59.0",
+    "lxml>=6.0.0",
+    "python-dotenv>=1.1.1",
+]
