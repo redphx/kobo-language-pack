@@ -4,4 +4,5 @@ Scripts to create custom language pack for Kobo
 
 Check [redphx/kobo-tieng-viet](https://github.com/redphx/kobo-tieng-viet) for a complete project
 
-(to be updated...)
+To be updated...  
+Meanwhile ask me first before trying to build.  
