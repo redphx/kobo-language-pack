@@ -212,7 +212,7 @@ def generate_tgz(version: str, include: list):
                     continue
 
             print(arcname)
-            tar.add(pth, arcname=arcname)
+            tar.add(pth, arcname=arcname, recursive=False)
 
     # Create dist/VERSION
     with open(dist_path / 'VERSION', 'w') as fp:
