@@ -68,8 +68,8 @@ FONTS = {
 }
 
 
-def copy_fonts():
-    FONTS_SOURCE_DIR = './fonts'
+def copy_fonts(fonts_dir: str):
+    FONTS_SOURCE_DIR = fonts_dir or './fonts'
     FONTS_TROLLTECH_DIR = (
         Path(KOBOROOT_DIR)
         / 'usr'
@@ -245,6 +245,7 @@ def main():
     )
     parser.add_argument('--build', type=str, default='dev', choices=['release', 'dev'])
     parser.add_argument('--version', type=str, help='Version in YYYYMMDD format')
+    parser.add_argument('--fonts', type=str, help='Path to fonts dir')
     args = parser.parse_args()
 
     include: set = args.include
@@ -269,11 +270,18 @@ def main():
         combine_translations(version)
 
     if 'fonts' in include:
-        copy_fonts()
+        copy_fonts(args.fonts)
 
     generate_tgz(version, include)
 
-    print('Built successfully!')
+    YELLOW = '\033[33m'
+    GREEN = '\033[32m'
+    RESET = '\033[0m'
+
+    print(
+        'Built successfully:',
+        f'{GREEN if build == 'release' else YELLOW}{version}{RESET}',
+    )
 
 
 if __name__ == '__main__':
